@@ -5,6 +5,9 @@ import { join } from 'path';
 import morganMiddleWare from './logger/morganLogger';
 import winstonLogger from './logger/winstonLogger';
 import userRouter from './routes/userRoute';
+import openApi from "@ramyabala221190/api-contracts/openapi";
+import swaggerUI from 'swagger-ui-express';
+import { readFileSync } from 'fs';
 
 //custom error class for creating custom error messages
 export class CustomError extends Error{
@@ -15,7 +18,25 @@ export class CustomError extends Error{
     }
   }
 
+  export class ExplicitError extends CustomError{
+
+  }
+
 const app=express();
+
+console.log(`Application running in environment: ${process.env.APP_ENV}`);
+if (process.env.APP_ENV !== "prod") {
+  //we dont swagger in prod
+ const userJSONPath=join(`${process.cwd()}`,'bundled-user.json');
+  const userJSON= readFileSync(userJSONPath,{encoding:'utf8'});
+  app.use(
+    '/api-docs',
+    swaggerUI.serve,
+    swaggerUI.setup(JSON.parse(userJSON), { explorer: true, swaggerOptions: {
+    supportedSubmitMethods: ['get'] // Disables the "Execute" button for POST, PUT, DELETE
+  } })
+  )
+}
 
 app.use(morganMiddleWare);
 
